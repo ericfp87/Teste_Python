@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="box">
+	<h1>Gerador de Apostas</h1>
+
+  <a href="{{ url_for('new_game') }}" class="btn btn-primary btn-block btn-large">Novo Jogo</a>
+  <a href="{{ url_for('result') }}" class="btn btn-secondary btn-block btn-large">Resultado da Mega</a>
+  <a href="{{ url_for('hits') }}" class="btn btn-secondary btn-block btn-large">Numero de Acertos</a>
+
+</div>
+
+{% endblock %}

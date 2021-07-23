@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="box">
+
+
+    <form action="{{ url_for('update') }}" method="post">
+<!--        alterou o name de email para user e retirou os required-->
+        <input type="text" name="user" placeholder="Editar nome"/>
+        <input type="password" name="password" placeholder="Criar nova senha"/>
+        <button type="submit" class="btn btn-primary btn-block btn-large">Editar</button>
+    </form>
+</div>
+
+{% endblock %}

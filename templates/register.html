@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="box">
+   <h1>Cadastrar Novo Usuario</h1>
+
+    <form action="{{ url_for('update') }}" method="post">
+<!--        alterou o name de email para user e retirou os required-->
+        <input type="text" name="user" placeholder="Novo Usuario"/>
+        <input type="password" name="password" placeholder="Nova senha"/>
+        <button type="submit" class="btn btn-primary btn-block btn-large">Cadastrar</button>
+    </form>
+</div>
+
+{% endblock %}
