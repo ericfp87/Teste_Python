@@ -1,4 +1,6 @@
 import mysql.connector
+import requests
+from bs4 import BeautifulSoup
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
@@ -9,6 +11,7 @@ import jwt
 from flask_login import login_user
 from functools import wraps
 import random
+import webScraping_MegaSena
 
 # from app import app, db
 
@@ -35,6 +38,10 @@ class Game(db.Model):
     jogo = db.Column(db.String(80), unique=True, nullable=False)
 
 db.create_all()
+
+
+lista_aposta = []
+final = []
 
 def jwt_required(f):
     @wraps(f)
@@ -124,15 +131,35 @@ def update():
 def delete():
     pass
 
+
 @app.route('/hits')
 def hits():
+    URL = "https://www.google.com/search?q=caixa+mega+sena"
+
+
+    final = []
+    resposta = requests.get(URL, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'})
+    soup = BeautifulSoup(resposta.content)
+    numeros_finais = soup.find_all("span", {"class": "zSMazd UHlKbe"})
+    for numero in numeros_finais:
+        final.append(numero.text)
+    print(final)
+    print(lista_aposta)
+
+    s = set(lista_aposta)
+    compare = [x for x in final if x in s]
+    print(compare)
     return render_template('hits.html')
+
+
 
 @app.route('/result')
 def result():
     return render_template('last_mega.html')
 
 @app.route('/new', methods=["GET", "POST"])
+
 def new_game():
     if request.method == "POST":
 
@@ -142,8 +169,10 @@ def new_game():
             nova_aposta = Game(
                 jogo=aposta
             )
+            lista_aposta.append(aposta)
             db.session.add(nova_aposta)
             db.session.commit()
+            print(lista_aposta)
             print(qtd)
             print(aposta)
             return redirect(url_for('get_all_games'))
