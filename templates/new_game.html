@@ -1,10 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Novo Jogo MegaSena</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
 
-</body>
-</html>
+<div class="box">
+    <h1>Novo Jogo</h1>
+    <p>Insira a quantidade de números</p>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+         <p>{{ message }}</p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('new_game') }}" method="post">
+
+        <input type="text" name="qtd" placeholder="Quantidade" required="required"/>
+        <button type="submit" class="btn btn-primary btn-block btn-large">OK</button>
+    </form>
+</div>
+
+{% endblock %}

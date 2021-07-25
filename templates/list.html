@@ -1,10 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Lista de Jogos</title>
-</head>
-<body>
+<div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        {% for game in games %}
+          <tr>
+            <td>{{game[0]}}</td>
+            <td>{{game[1]}}</td>
+            ...
+          </tr>
 
-</body>
-</html>
+        {% endfor %}
+
+      </div>
+    </div>
+</div>x

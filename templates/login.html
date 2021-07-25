@@ -12,7 +12,7 @@
     {% endwith %}
     <form action="{{ url_for('login') }}" method="post">
 <!--        alterou o name de email para user-->
-        <input type="text" name="user" placeholder="Usuário" required="required"/>
+        <input type="text" name="username" placeholder="Usuário" required="required"/>
         <input type="password" name="password" placeholder="Senha" required="required"/>
         <button type="submit" class="btn btn-primary btn-block btn-large">Entrar</button>
     </form>

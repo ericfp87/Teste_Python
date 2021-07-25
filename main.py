@@ -1,5 +1,16 @@
-from flask import Flask, render_template, redirect, url_for, request, flash
+import mysql.connector
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, current_app
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_marshmallow import Marshmallow
+import datetime
+import jwt
+from flask_login import login_user
+from functools import wraps
+import random
+
+# from app import app, db
 
 
 app = Flask(__name__)
@@ -8,18 +19,48 @@ app.config['SECRET_KEY'] = 'secret1234567890'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin@localhost/users'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+ma = Marshmallow(app)
+Migrate(app, db)
 
 
 class User(db.Model):
     __tablename__ = "usuarios"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
 
-
+class Game(db.Model):
+    __tablename__ = "jogos"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    jogo = db.Column(db.String(80), unique=True, nullable=False)
 
 db.create_all()
 
+def jwt_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = request.args.get('token')
+
+        if not token:
+            return jsonify({"error" : "Sem permissão para acessar essa rota"}), 403
+        if not "Bearer" in token:
+            return jsonify({"Token Inválido"}), 401
+        try:
+            token_pure = token.replace("Bearer", "")
+            decoded = jwt.decode(token_pure, current_app.config['SECRET_KEY'])
+            current_user = User.query.get(username=decoded['username'])
+        except:
+            return jsonify({"error" : "Token inválido"}), 403
+        return f(current_user=current_user, *args, **kwargs)
+    return wrapper
+
+@app.shell_context_processor
+def make_shell_context():
+    return dict (
+        app=app,
+        db=db,
+        User=User
+    )
 
 @app.route('/')
 def home():
@@ -40,9 +81,16 @@ def login():
             flash("Senha Inválida! Tente novamente!")
             return redirect(url_for('login'))
 
-        else:
-            return redirect(url_for('index'))
+        payload = {
+            "id": user.id,
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+        }
+        token = jwt.encode(payload, app.config['SECRET_KEY'])
+
+        return redirect(url_for('index'))
     return render_template('login.html')
+
+
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -55,8 +103,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('index'))
-
+        return redirect(url_for('login'))
 
     return render_template('register.html')
 
@@ -69,6 +116,7 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/update', methods=["GET", "PATCH"])
+@jwt_required
 def update():
     return render_template('update.html')
 
@@ -86,7 +134,32 @@ def result():
 
 @app.route('/new', methods=["GET", "POST"])
 def new_game():
+    if request.method == "POST":
+
+        qtd = int(request.form.get("qtd"))
+        if qtd > 5 and qtd < 11:
+            aposta = str(random.sample(range(1, 61), qtd))
+            nova_aposta = Game(
+                jogo=aposta
+            )
+            db.session.add(nova_aposta)
+            db.session.commit()
+            print(qtd)
+            print(aposta)
+            return redirect(url_for('get_all_games'))
+        else:
+            flash("Escolha entre 6 a 10 numeros")
+            print("numero errado")
+
     return render_template('new_game.html')
+
+@app.route("/list")
+def get_all_games():
+    con = mysql.connector.connect(host="localhost", user="admin", password="admin", db="users")
+    cur = con.cursor()
+    cur.execute("SELECT * FROM jogos")
+    games = cur.fetchall()
+    return render_template("list.html", games=games)
 
 if __name__ == "__main__":
     app.run(debug=True)
