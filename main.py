@@ -122,9 +122,34 @@ def index():
 def logout():
     return redirect(url_for('home'))
 
-@app.route('/update', methods=["GET", "PATCH"])
-@jwt_required
+@app.route('/update', methods=["GET", "POST"])
+
 def update():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        new_username = request.form.get("new_username")
+        new_password = request.form.get("new_password")
+
+        user = User.query.filter_by(username=username).first()
+        pwd = User.query.filter_by(password=password).first()
+        if not user:
+            flash("Este usuário não existe. Tente novamente!")
+            return redirect(url_for('login'))
+
+        elif not pwd:
+            flash("Senha Inválida! Tente novamente!")
+            return redirect(url_for('login'))
+
+        else:
+            con = mysql.connector.connect(host="localhost", user="admin", password="admin", db="users")
+            cur = con.cursor()
+            update = cur.execute(f"UPDATE usuarios SET username = '{new_username}', password = '{new_password}' WHERE username = '{username}';")
+            cur.execute(update)
+            con.commit()
+
+            flash("Edição Realizada com Sucesso!")
     return render_template('update.html')
 
 @app.route('/delete', methods=["GET", "POST"])
