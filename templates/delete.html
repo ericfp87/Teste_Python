@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="box">
+
+
+    <form action="{{ url_for('delete') }}" method="POST">
+        <h2><p>Digite seu usuário e senha para excluir a conta</p></h2>
+        <input type="text" name="username" placeholder="Usuario"/>
+        <input type="password" name="password" placeholder="Senha"/>
+        <button type="submit" class="btn btn-primary btn-block btn-large">Deletar</button>
+    </form>
+</div>
+
+{% endblock %}

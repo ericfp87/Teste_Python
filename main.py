@@ -127,9 +127,29 @@ def logout():
 def update():
     return render_template('update.html')
 
-@app.route('/delete', methods=["GET", "DELETE"])
+@app.route('/delete', methods=["GET", "POST"])
 def delete():
-    pass
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        user = User.query.filter_by(username=username).first()
+        pwd = User.query.filter_by(password=password).first()
+        if not user:
+            flash("Este usuário não existe. Tente novamente!")
+            return redirect(url_for('login'))
+
+        elif not pwd:
+            flash("Senha Inválida! Tente novamente!")
+            return redirect(url_for('login'))
+
+        else:
+            con = mysql.connector.connect(host="localhost", user="admin", password="admin", db="users")
+            cur = con.cursor()
+            cur.execute(f"DELETE FROM usuarios WHERE username = {username};")
+            games = cur.fetchall()
+            return redirect(url_for('home'))
+    return render_template('delete.html')
 
 
 @app.route('/hits')
@@ -203,7 +223,7 @@ def new_game():
 def get_all_games():
     con = mysql.connector.connect(host="localhost", user="admin", password="admin", db="users")
     cur = con.cursor()
-    cur.execute("SELECT * FROM jogos")
+    cur.execute("SELECT jogo from jogos ORDER BY id ASC;")
     games = cur.fetchall()
     return render_template("list.html", games=games)
 
