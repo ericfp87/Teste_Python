@@ -2,19 +2,13 @@ import mysql.connector
 import requests
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, current_app
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_marshmallow import Marshmallow
 import datetime
 import jwt
-from flask_login import login_user
 from functools import wraps
 import random
-import webScraping_MegaSena
 
-# from app import app, db
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
@@ -22,15 +16,15 @@ app.config['SECRET_KEY'] = 'secret1234567890'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin@localhost/users'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-ma = Marshmallow(app)
-Migrate(app, db)
+
+
 
 
 class User(db.Model):
     __tablename__ = "usuarios"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(80), nullable=False)
+    password = db.Column(db.String(1000), nullable=False)
 
 class Game(db.Model):
     __tablename__ = "jogos"
@@ -42,23 +36,26 @@ db.create_all()
 
 lista_aposta = []
 final = []
+token = ''
 
 def jwt_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        token = request.args.get('token')
-
+        global token
+        print(token)
+        if 'x-access-tokens' in request.headers:
+            token = request.headers['x-access-tokens']
         if not token:
-            return jsonify({"error" : "Sem permissão para acessar essa rota"}), 403
+            return jsonify({"error" : "Sem permissao para acessar essa rota"}), 403
         if not "Bearer" in token:
             return jsonify({"Token Inválido"}), 401
         try:
             token_pure = token.replace("Bearer", "")
-            decoded = jwt.decode(token_pure, current_app.config['SECRET_KEY'])
-            current_user = User.query.get(username=decoded['username'])
+            decoded = jwt.decode(token_pure, app.config['SECRET_KEY'])
+            current_user = User.query.get(username=decoded['username']).first()
         except:
-            return jsonify({"error" : "Token inválido"}), 403
-        return f(current_user=current_user, *args, **kwargs)
+            return jsonify({"error" : "Token invalido"}), 403
+        return f(current_user, *args, **kwargs)
     return wrapper
 
 @app.shell_context_processor
@@ -75,16 +72,20 @@ def home():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
+        global token
         username = request.form.get("username")
         password = request.form.get("password")
 
+
         user = User.query.filter_by(username=username).first()
-        pwd = User.query.filter_by(password=password).first()
+
+
         if not user:
             flash("Este usuário não existe. Tente novamente!")
             return redirect(url_for('login'))
-        elif not pwd:
+        if not check_password_hash(user.password, password):
             flash("Senha Inválida! Tente novamente!")
             return redirect(url_for('login'))
 
@@ -93,6 +94,7 @@ def login():
             "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
         }
         token = jwt.encode(payload, app.config['SECRET_KEY'])
+
 
         return redirect(url_for('index'))
     return render_template('login.html')
@@ -103,8 +105,10 @@ def login():
 def register():
     if request.method == "POST":
 
+        hashed_password = generate_password_hash(request.form.get("password"), method='sha256')
+
         new_user = User(username=request.form.get("username"),
-                        password=request.form.get("password")
+                        password=hashed_password
                         )
 
         db.session.add(new_user)
@@ -123,8 +127,8 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/update', methods=["GET", "POST"])
-
-def update():
+@jwt_required
+def update(current_user):
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
