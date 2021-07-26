@@ -146,8 +146,10 @@ def delete():
         else:
             con = mysql.connector.connect(host="localhost", user="admin", password="admin", db="users")
             cur = con.cursor()
-            cur.execute(f"DELETE FROM usuarios WHERE username = {username};")
-            games = cur.fetchall()
+            delete = cur.execute(f"DELETE FROM usuarios WHERE username = '{username}';")
+            cur.execute(delete)
+            con.commit()
+
             return redirect(url_for('home'))
     return render_template('delete.html')
 
