@@ -57,7 +57,7 @@ def jwt_required(f):
             # print(token_pure)
             decoded = jwt.decode(token, app.config['SECRET_KEY'])
             print(decoded)
-            current_user = User.query.filter_by(username=decoded['username']).first()
+            current_user = User.query.filter_by(id=decoded['id']).first()
             print(current_user)
         except:
             return jsonify({"error" : "Token invalido"}), 401
