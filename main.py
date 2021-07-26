@@ -47,11 +47,14 @@ def jwt_required(f):
             token = request.headers['x-access-tokens']
         if not token:
             return jsonify({"error" : "Sem permissao para acessar essa rota"}), 403
-        if not "Bearer" in token:
-            return jsonify({"Token Inválido"}), 401
+        # if not "Bearer" in token:
+        #     return jsonify({"Error": "Token Invalido"}), 401
         try:
+            print(token)
             token_pure = token.replace("Bearer", "")
+            print(token_pure)
             decoded = jwt.decode(token_pure, app.config['SECRET_KEY'])
+            print(decoded)
             current_user = User.query.get(username=decoded['username']).first()
         except:
             return jsonify({"error" : "Token invalido"}), 403
