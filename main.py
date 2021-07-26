@@ -1,7 +1,7 @@
 import mysql.connector
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, current_app
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 import jwt
@@ -36,28 +36,31 @@ db.create_all()
 
 lista_aposta = []
 final = []
-token = ''
+token = None
+
 
 def jwt_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         global token
+
         print(token)
         if 'x-access-tokens' in request.headers:
             token = request.headers['x-access-tokens']
         if not token:
-            return jsonify({"error" : "Sem permissao para acessar essa rota"}), 403
+            return jsonify({"error" : "Sem permissao para acessar essa rota"}), 401
         # if not "Bearer" in token:
         #     return jsonify({"Error": "Token Invalido"}), 401
         try:
             print(token)
-            token_pure = token.replace("Bearer", "")
-            print(token_pure)
-            decoded = jwt.decode(token_pure, app.config['SECRET_KEY'])
+            # token_pure = token.replace("Bearer", "")
+            # print(token_pure)
+            decoded = jwt.decode(token, app.config['SECRET_KEY'])
             print(decoded)
             current_user = User.query.get(username=decoded['username']).first()
+            print(current_user)
         except:
-            return jsonify({"error" : "Token invalido"}), 403
+            return jsonify({"error" : "Token invalido"}), 401
         return f(current_user, *args, **kwargs)
     return wrapper
 
@@ -132,6 +135,7 @@ def logout():
 @app.route('/update', methods=["GET", "POST"])
 @jwt_required
 def update(current_user):
+
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
