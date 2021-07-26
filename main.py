@@ -137,6 +137,30 @@ def hits():
     URL = "https://www.google.com/search?q=caixa+mega+sena"
 
 
+    del final[:]
+    resposta = requests.get(URL, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'})
+    soup = BeautifulSoup(resposta.content)
+    numeros_finais = soup.find_all("span", {"class": "zSMazd UHlKbe"})
+    for numero in numeros_finais:
+        final.append(numero.text)
+
+    for i in range(0, len(final)):
+        final[i] = int(final[i])
+    print(final)
+
+    diff_acertos = list(set(lista_aposta) - set(final))
+    print(diff_acertos)
+    acertos = len(lista_aposta) - len(diff_acertos)
+    print(acertos)
+    return render_template('hits.html', acertos=acertos)
+
+
+
+@app.route('/result')
+def result():
+    URL = "https://www.google.com/search?q=caixa+mega+sena"
+
     final = []
     resposta = requests.get(URL, headers={
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'})
@@ -145,18 +169,7 @@ def hits():
     for numero in numeros_finais:
         final.append(numero.text)
     print(final)
-    print(lista_aposta)
-
-    s = set(lista_aposta)
-    compare = [x for x in final if x in s]
-    print(compare)
-    return render_template('hits.html')
-
-
-
-@app.route('/result')
-def result():
-    return render_template('last_mega.html')
+    return render_template('last_mega.html', final=final)
 
 @app.route('/new', methods=["GET", "POST"])
 
@@ -165,11 +178,15 @@ def new_game():
 
         qtd = int(request.form.get("qtd"))
         if qtd > 5 and qtd < 11:
-            aposta = str(random.sample(range(1, 61), qtd))
+            aposta = random.sample(range(1, 61), qtd)
+            del lista_aposta[:]
+            for num in aposta:
+                lista_aposta.append(num)
+            list_db = str(lista_aposta)
             nova_aposta = Game(
-                jogo=aposta
+                jogo=list_db
             )
-            lista_aposta.append(aposta)
+
             db.session.add(nova_aposta)
             db.session.commit()
             print(lista_aposta)
