@@ -174,7 +174,7 @@ def delete():
             delete = cur.execute(f"DELETE FROM usuarios WHERE username = '{username}';")
             cur.execute(delete)
             con.commit()
-
+            flash("Usuário Deletado")
             return redirect(url_for('home'))
     return render_template('delete.html')
 

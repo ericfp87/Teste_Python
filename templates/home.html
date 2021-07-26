@@ -3,6 +3,13 @@
 
 <div class="box">
 	<h1>Gerador de Apostas</h1>
+    {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                 <p>{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+    {% endwith %}
 
   <a href="{{ url_for('login') }}" class="btn btn-primary btn-block btn-large">Login</a>
   <a href="{{ url_for('register') }}" class="btn btn-secondary btn-block btn-large">Cadastrar</a>
